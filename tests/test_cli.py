@@ -70,6 +70,52 @@ class TestCLI(unittest.TestCase):
         result = main(["youtube", "/nonexistent/file.csv"])
         self.assertEqual(result, 1)
 
+    def test_dry_run_does_not_write(self):
+        output = Path(tempfile.mktemp(suffix=".opml"))
+        result = main([
+            "youtube", str(FIXTURES / "subscriptions.csv"),
+            "-o", str(output), "--dry-run",
+        ])
+        self.assertEqual(result, 0)
+        self.assertFalse(output.exists())
+
+    def test_verbose_flag(self):
+        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
+            output = Path(f.name)
+
+        result = main([
+            "youtube", str(FIXTURES / "subscriptions.csv"),
+            "-o", str(output), "--verbose",
+        ])
+        self.assertEqual(result, 0)
+
+    def test_convert_auto_detect_youtube(self):
+        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
+            output = Path(f.name)
+
+        result = main(["convert", str(FIXTURES / "subscriptions.csv"), "-o", str(output)])
+        self.assertEqual(result, 0)
+        self.assertTrue(output.exists())
+
+        root = ET.parse(output).getroot()
+        rss_feeds = [f for f in root.iter("outline") if f.get("type") == "rss"]
+        self.assertEqual(len(rss_feeds), 3)
+
+    def test_convert_auto_detect_spotify(self):
+        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
+            output = Path(f.name)
+
+        result = main(["convert", str(FIXTURES / "spotify_podcasts.json"), "-o", str(output)])
+        self.assertEqual(result, 0)
+
+    def test_convert_unknown_format(self):
+        with tempfile.NamedTemporaryFile(suffix=".xyz", delete=False, mode="w") as f:
+            f.write("random nonsense data !@#$%^")
+            unknown = Path(f.name)
+
+        result = main(["convert", str(unknown)])
+        self.assertEqual(result, 1)
+
 
 if __name__ == "__main__":
     unittest.main()
