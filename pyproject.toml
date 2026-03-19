@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "escape-the-algorithm"
-version = "0.1.0"
+version = "0.2.0"
 description = "Escape algorithmic feeds. Convert platform exports to RSS/OPML."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,3 +29,10 @@ eta = "eta.cli:main"
 [project.urls]
 Homepage = "https://github.com/TheAmericanMaker/Escape-the-algorithm"
 Issues = "https://github.com/TheAmericanMaker/Escape-the-algorithm/issues"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
