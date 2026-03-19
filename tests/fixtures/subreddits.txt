@@ -1,0 +1,5 @@
+# My subreddits
+python
+r/linux
+https://www.reddit.com/r/privacy
+selfhosted
