@@ -73,6 +73,18 @@ class TestTwitterParser(unittest.TestCase):
         items = parse(path, nitter_instance="nitter.privacydev.net")
         self.assertEqual(items[0].xml_url, "https://nitter.privacydev.net/testuser/rss")
 
+    def test_id_only_archive(self):
+        """Twitter archives with intent URLs (ID only, no username)."""
+        js = '''window.YTD.following.part0 = [
+          {"following": {"accountId": "999", "userLink": "https://twitter.com/intent/user?user_id=999"}}
+        ]'''
+        path = self._write_temp(js)
+        items = parse(path)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].title, "Twitter User 999")
+        self.assertEqual(items[0].xml_url, "")  # Can't build RSS from ID
+        self.assertIn("999", items[0].html_url)
+
 
 if __name__ == "__main__":
     unittest.main()

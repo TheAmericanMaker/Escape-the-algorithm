@@ -9,7 +9,7 @@ from pathlib import Path
 def detect_platform(path: Path) -> str | None:
     """Detect which platform an export file came from.
 
-    Returns "youtube", "reddit", "twitter", "spotify", or None if unrecognized.
+    Returns "youtube", "reddit", "twitter", "tiktok", "spotify", or None.
     """
     suffix = path.suffix.lower()
 
@@ -28,6 +28,14 @@ def detect_platform(path: Path) -> str | None:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
+                # TikTok: has Activity > Following List structure
+                if "Activity" in data and isinstance(data.get("Activity"), dict):
+                    activity = data["Activity"]
+                    if "Following List" in activity:
+                        return "tiktok"
+                # TikTok: direct Following key
+                if "Following" in data and isinstance(data["Following"], list):
+                    return "tiktok"
                 spotify_keys = {"shows", "podcasts", "podcastInteractionData", "followerCount"}
                 if spotify_keys & set(data.keys()):
                     return "spotify"

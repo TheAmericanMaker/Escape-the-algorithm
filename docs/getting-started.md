@@ -23,6 +23,7 @@ Pick the platforms you want to escape from:
 - **YouTube** — [YouTube export guide](youtube.md)
 - **Reddit** — [Reddit export guide](reddit.md)
 - **Twitter/X** — [Twitter export guide](twitter.md)
+- **TikTok** — [TikTok export guide](tiktok.md)
 - **Spotify** — [Spotify export guide](spotify.md)
 
 ## Step 3: Convert to OPML
@@ -34,6 +35,7 @@ Run the converter for each platform:
 eta youtube subscriptions.csv
 eta reddit subreddits.txt
 eta twitter following.js
+eta tiktok user_data.json
 eta spotify Follow.json
 
 # Or let eta auto-detect the format

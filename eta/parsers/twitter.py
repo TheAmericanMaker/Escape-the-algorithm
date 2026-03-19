@@ -120,8 +120,9 @@ def _extract_username_from_entry(entry: dict) -> str:
     # Try userLink field (Twitter archive format): "https://x.com/username"
     user_link = entry.get("userLink", "")
     if user_link:
-        match = re.search(r"(?:twitter\.com|x\.com)/(\w+)", user_link)
-        if match:
+        # Direct username URL: twitter.com/username or x.com/username
+        match = re.search(r"(?:twitter\.com|x\.com)/(\w+)(?:\?|$)", user_link)
+        if match and match.group(1) not in ("intent", "i"):
             return match.group(1)
 
     # Try common field names
@@ -129,6 +130,12 @@ def _extract_username_from_entry(entry: dict) -> str:
         value = entry.get(key, "")
         if value and isinstance(value, str):
             return _clean_username(value)
+
+    # Fallback: use accountId (numeric) — this produces feeds that won't work
+    # with Nitter but preserves the data for manual resolution
+    account_id = entry.get("accountId", "")
+    if account_id:
+        return f"id:{account_id}"
 
     return ""
 
@@ -150,6 +157,16 @@ def _clean_username(value: str) -> str:
 
 
 def _make_feed_item(username: str, instance: str) -> FeedItem:
+    # Numeric ID fallback — RSS won't work but data is preserved
+    if username.startswith("id:"):
+        user_id = username[3:]
+        return FeedItem(
+            title=f"Twitter User {user_id}",
+            xml_url="",  # Can't construct RSS URL from ID alone
+            html_url=f"https://x.com/intent/user?user_id={user_id}",
+            category="Twitter",
+        )
+
     return FeedItem(
         title=f"@{username}",
         xml_url=TWITTER_RSS_URL.format(instance=instance, username=username),

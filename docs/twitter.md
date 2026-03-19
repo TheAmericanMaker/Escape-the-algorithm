@@ -51,18 +51,26 @@ The default RSS URL pattern is:
 https://nitter.net/{username}/rss
 ```
 
-### Finding a Working Nitter Instance
+### Nitter Availability
 
-Nitter instances can go up and down. If the default instance (`nitter.net`) isn't working, you can find active instances at:
+Since early 2024, X/Twitter has blocked guest account access, which broke most public Nitter instances. Some community-maintained instances still work, but availability varies. Check:
 
+- [status.d420.de/nitter](https://status.d420.de/) — live instance health tracker
 - [Nitter instance list](https://github.com/zedeus/nitter/wiki/Instances)
-- [status.d420.de/nitter](https://status.d420.de/nitter/)
 
-After generating your OPML, you can find-and-replace the Nitter domain in the file if needed.
+After generating your OPML, you can find-and-replace the Nitter domain in the file to point to a working instance. Self-hosting Nitter with your own Twitter API credentials is the most reliable option.
+
+### Archives With Only User IDs
+
+Some Twitter data archives only contain numeric user IDs (via intent URLs like `twitter.com/intent/user?user_id=12345`) without usernames. In this case, `eta` preserves the user IDs but cannot generate RSS feed URLs. You'll see these as "Twitter User 12345" entries with empty RSS URLs.
+
+To get usernames, you can:
+1. Visit each intent URL in your browser to see the profile
+2. Use a third-party tool to batch-resolve IDs to usernames
 
 ## Limitations
 
+- **Nitter availability** is unreliable since X blocked guest access in 2024. Self-hosting is recommended.
 - **Private accounts** won't have accessible RSS feeds regardless of instance
-- **Nitter availability** depends on community-maintained instances
-- **Rate limiting** by Twitter/X may affect Nitter instances periodically
+- **ID-only archives** from official Twitter exports may lack usernames — RSS feeds can't be generated from IDs alone
 - RSS feeds show tweets in chronological order (which is the point)

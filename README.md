@@ -73,6 +73,7 @@ Import the `.opml` file into your RSS reader. Done. The algorithm no longer deci
 | **YouTube** | Google Takeout CSV | RSS feed for every channel you subscribe to | Ready |
 | **Reddit** | GDPR data export or text list | RSS feed for every subreddit | Ready |
 | **Twitter/X** | Data archive (following.js) | RSS feeds via Nitter instances | Ready |
+| **TikTok** | Data export (user_data.json) | RSS feeds via ProxiTok instances | Ready |
 | **Spotify** | Privacy data export JSON | Podcast names + Spotify URLs | Partial* |
 
 *Spotify doesn't include RSS feed URLs in their export. See [docs/spotify.md](docs/spotify.md) for how to find podcast RSS feeds manually.
@@ -82,14 +83,15 @@ Import the `.opml` file into your RSS reader. Done. The algorithm no longer deci
 ```
 ┌──────────────┐     ┌─────────┐     ┌──────────────┐     ┌────────────┐
 │  YouTube CSV │────▶│         │────▶│              │────▶│ Import to  │
-│  Reddit CSV  │     │   eta   │     │  feeds.opml  │     │ RSS Reader │
-│  Twitter JS  │     │         │     │              │     │            │
+│  Reddit CSV  │     │         │     │              │     │ RSS Reader │
+│  Twitter JS  │     │   eta   │     │  feeds.opml  │     │            │
+│  TikTok JSON │     │         │     │              │     │            │
 │  Spotify JSON│────▶│         │────▶│              │────▶│            │
 └──────────────┘     └─────────┘     └──────────────┘     └────────────┘
      Your data         1 command       Standard format      Your choice
 ```
 
-1. **Export** your data from the platform ([YouTube](docs/youtube.md) | [Reddit](docs/reddit.md) | [Twitter/X](docs/twitter.md) | [Spotify](docs/spotify.md))
+1. **Export** your data from the platform ([YouTube](docs/youtube.md) | [Reddit](docs/reddit.md) | [Twitter/X](docs/twitter.md) | [TikTok](docs/tiktok.md) | [Spotify](docs/spotify.md))
 2. **Convert** with `eta` — one command, auto-detects the format
 3. **Import** the OPML file into any RSS reader
 
@@ -139,6 +141,7 @@ eta convert <file>              Auto-detect format and convert to OPML
 eta youtube <file> [-o out]     Convert YouTube subscriptions CSV
 eta reddit <file> [-o out]      Convert Reddit subscriptions CSV/text
 eta twitter <file> [-o out]     Convert Twitter/X following list
+eta tiktok <file> [-o out]      Convert TikTok following list
 eta spotify <file> [-o out]     Convert Spotify podcast export
 eta merge <f1> <f2> ... [-o out] Merge multiple OPML files
 
@@ -154,6 +157,7 @@ Flags:
 - [YouTube Guide](docs/youtube.md) — How to export from Google Takeout
 - [Reddit Guide](docs/reddit.md) — How to export your subreddit subscriptions
 - [Twitter/X Guide](docs/twitter.md) — How to export your following list
+- [TikTok Guide](docs/tiktok.md) — How to export your following list
 - [Spotify Guide](docs/spotify.md) — How to export podcasts (and find their RSS feeds)
 
 ## Why Zero Dependencies?

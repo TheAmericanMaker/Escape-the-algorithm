@@ -102,6 +102,15 @@ def main(argv: list[str] | None = None) -> int:
     tw.add_argument("--dry-run", action="store_true", help="Preview without writing")
     tw.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
+    # TikTok
+    tk = subparsers.add_parser(
+        "tiktok", help="Convert TikTok following list to OPML"
+    )
+    tk.add_argument("input", type=Path, help="Path to user_data.json from TikTok data export")
+    tk.add_argument("-o", "--output", type=Path, help="Output OPML file (default: tiktok_feeds.opml)")
+    tk.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    tk.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
+
     # Spotify
     sp = subparsers.add_parser(
         "spotify", help="Convert Spotify podcast data to OPML"
@@ -178,6 +187,8 @@ def _cmd_convert(args: argparse.Namespace) -> int:
         from eta.parsers.reddit import parse
     elif args.command == "twitter":
         from eta.parsers.twitter import parse
+    elif args.command == "tiktok":
+        from eta.parsers.tiktok import parse
     elif args.command == "spotify":
         from eta.parsers.spotify import parse
     else:

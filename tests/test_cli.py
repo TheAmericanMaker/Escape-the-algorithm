@@ -48,6 +48,26 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertTrue(output.exists())
 
+    def test_twitter_command(self):
+        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
+            output = Path(f.name)
+
+        result = main(["twitter", str(FIXTURES / "following.js"), "-o", str(output)])
+        self.assertEqual(result, 0)
+        self.assertTrue(output.exists())
+
+    def test_tiktok_command(self):
+        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
+            output = Path(f.name)
+
+        result = main(["tiktok", str(FIXTURES / "tiktok_following.json"), "-o", str(output)])
+        self.assertEqual(result, 0)
+        self.assertTrue(output.exists())
+
+        root = ET.parse(output).getroot()
+        rss_feeds = [f for f in root.iter("outline") if f.get("type") == "rss"]
+        self.assertEqual(len(rss_feeds), 3)
+
     def test_merge_command(self):
         with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f1, \
              tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f2, \
