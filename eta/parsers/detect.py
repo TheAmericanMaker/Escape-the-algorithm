@@ -9,11 +9,21 @@ from pathlib import Path
 def detect_platform(path: Path) -> str | None:
     """Detect which platform an export file came from.
 
-    Returns "youtube", "reddit", "spotify", or None if unrecognized.
+    Returns "youtube", "reddit", "twitter", "spotify", or None if unrecognized.
     """
     suffix = path.suffix.lower()
 
-    # JSON files — likely Spotify
+    # JS files — Twitter archive format
+    if suffix == ".js":
+        try:
+            text = path.read_text(encoding="utf-8")
+            if text.strip().startswith("window.YTD.following"):
+                return "twitter"
+        except UnicodeDecodeError:
+            pass
+        return None
+
+    # JSON files — could be Spotify or Twitter
     if suffix == ".json":
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
@@ -23,6 +33,12 @@ def detect_platform(path: Path) -> str | None:
                     return "spotify"
             if isinstance(data, list) and data:
                 first = data[0]
+                # Twitter JSON: objects with screenName/following keys
+                if isinstance(first, dict) and (
+                    "following" in first or "screenName" in first
+                    or "screen_name" in first
+                ):
+                    return "twitter"
                 if isinstance(first, dict) and (
                     "showName" in first or "show_name" in first
                     or "spotifyUri" in first or "uri" in first
@@ -50,6 +66,14 @@ def detect_platform(path: Path) -> str | None:
             return "youtube"
         if "youtube.com/channel/" in text[:2000]:
             return "youtube"
+
+        # Twitter: text with @ prefixed usernames or x.com/twitter.com URLs
+        twitter_indicators = sum(
+            1 for l in (text.splitlines()[:20])
+            if l.strip().startswith("@") or "twitter.com/" in l or "x.com/" in l
+        )
+        if twitter_indicators > 0:
+            return "twitter"
 
         # Reddit: contains subreddit-like patterns
         # Check if lines look like subreddit names (alphanumeric, short, no spaces)
