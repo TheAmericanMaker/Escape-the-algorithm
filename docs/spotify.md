@@ -23,31 +23,40 @@ Look for a JSON file containing your followed podcasts or shows. The filename va
 eta spotify Follow.json -o spotify_feeds.opml
 ```
 
-## Important: Finding RSS Feeds
+## Automatic RSS Feed Resolution
 
-Spotify deliberately does not include podcast RSS feed URLs in their data export. The `eta spotify` command extracts your podcast names and Spotify URLs, but the OPML file won't have direct RSS feed links.
+Spotify does not include RSS feed URLs in their data export. But `eta` can automatically look them up using the free [Podcast Index](https://podcastindex.org/) API.
 
-To find the actual RSS feeds for your podcasts:
+### Setup (one time)
 
-### Using Podcast Index
+1. Get a free API key pair at [api.podcastindex.org](https://api.podcastindex.org/)
+2. Set environment variables:
 
-1. Go to [podcastindex.org](https://podcastindex.org/)
-2. Search for the podcast name
-3. The RSS feed URL is listed on the podcast's page
+```bash
+export PODCAST_INDEX_KEY="your-api-key"
+export PODCAST_INDEX_SECRET="your-api-secret"
+```
 
-### Using Apple Podcasts
+### Usage
 
-1. Search for the podcast on [Apple Podcasts](https://podcasts.apple.com/)
-2. The RSS feed can be extracted from the Apple Podcasts listing
+```bash
+# Auto-resolve RSS feeds for all podcasts
+eta spotify Follow.json --resolve-rss -o spotify_feeds.opml
 
-### Using Listen Notes
+# Preview what would be resolved
+eta spotify Follow.json --resolve-rss --verbose --dry-run
+```
 
-1. Go to [listennotes.com](https://www.listennotes.com/)
-2. Search for the podcast
-3. Click on the podcast and look for the RSS feed link
+The `--resolve-rss` flag searches Podcast Index for each podcast by title and fills in the RSS feed URL. Podcasts that are Spotify-exclusive (no RSS feed exists) will be included without an RSS URL.
 
-### Why This Limitation Exists
+### Without the API
 
-Spotify hosts many podcasts exclusively and doesn't expose RSS feed URLs for them. For Spotify-exclusive podcasts, there may not be an RSS feed available. For podcasts that exist outside Spotify, the RSS feed is how they were distributed before Spotify — it still works.
+If you don't want to set up API keys, `eta spotify` still works — it exports podcast names and Spotify URLs. You can manually find RSS feeds at:
 
-This is a known limitation. A future version may add automatic RSS feed lookup.
+- [podcastindex.org](https://podcastindex.org/) — search by name
+- [listennotes.com](https://www.listennotes.com/) — search and view RSS feeds
+- [Apple Podcasts](https://podcasts.apple.com/) — RSS feeds can be extracted from listings
+
+## Why This Limitation Exists
+
+Spotify hosts many podcasts exclusively and doesn't expose RSS feed URLs in their data export. For Spotify-exclusive podcasts, there is no RSS feed. For podcasts that exist outside Spotify, the RSS feed is how they were distributed before Spotify — it still works.

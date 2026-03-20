@@ -119,6 +119,10 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("-o", "--output", type=Path, help="Output OPML file (default: spotify_feeds.opml)")
     sp.add_argument("--dry-run", action="store_true", help="Preview without writing")
     sp.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
+    sp.add_argument(
+        "--resolve-rss", action="store_true",
+        help="Look up RSS feeds via Podcast Index API (requires PODCAST_INDEX_KEY and PODCAST_INDEX_SECRET env vars)",
+    )
 
     # Merge
     mg = subparsers.add_parser(
@@ -195,6 +199,28 @@ def _cmd_convert(args: argparse.Namespace) -> int:
         return 1
 
     items = parse(input_path)
+
+    # Spotify RSS resolution via Podcast Index API
+    if getattr(args, "resolve_rss", False) and items:
+        from eta.resolvers.podcastindex import resolve_feeds
+
+        needs_resolve = sum(1 for item in items if not item.xml_url)
+        if needs_resolve:
+            _info(f"Looking up RSS feeds for {C.BOLD}{needs_resolve}{C.RESET} podcasts via Podcast Index...")
+
+            def _progress(current: int, total: int, title: str, feed_url: str) -> None:
+                if feed_url:
+                    print(f"  {C.GREEN}\u2713{C.RESET} {title}", file=sys.stderr)
+                else:
+                    print(f"  {C.YELLOW}\u2717{C.RESET} {title} {C.DIM}(not found){C.RESET}", file=sys.stderr)
+
+            try:
+                items = resolve_feeds(items, on_progress=_progress if getattr(args, "verbose", False) else None)
+                resolved = sum(1 for item in items if item.xml_url)
+                _info(f"Resolved {C.GREEN}{resolved}{C.RESET}/{len(items)} RSS feeds")
+            except ValueError as e:
+                _error(str(e))
+                return 1
 
     if getattr(args, "verbose", False):
         for item in items:
