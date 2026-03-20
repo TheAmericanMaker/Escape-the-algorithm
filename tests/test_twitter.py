@@ -75,9 +75,9 @@ class TestTwitterParser(unittest.TestCase):
 
     def test_id_only_archive(self):
         """Twitter archives with intent URLs (ID only, no username)."""
-        js = '''window.YTD.following.part0 = [
+        js = """window.YTD.following.part0 = [
           {"following": {"accountId": "999", "userLink": "https://twitter.com/intent/user?user_id=999"}}
-        ]'''
+        ]"""
         path = self._write_temp(js)
         items = parse(path)
         self.assertEqual(len(items), 1)

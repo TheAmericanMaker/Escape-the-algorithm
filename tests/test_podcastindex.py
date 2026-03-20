@@ -27,6 +27,7 @@ class TestAuthHeaders(unittest.TestCase):
     def test_auth_hash_is_sha1(self, mock_time):
         mock_time.time.return_value = 1700000000
         import hashlib
+
         expected = hashlib.sha1(b"mykeymysecret1700000000").hexdigest()
         headers = _auth_headers("mykey", "mysecret")
         self.assertEqual(headers["Authorization"], expected)
@@ -42,22 +43,29 @@ class TestSearchByTitle(unittest.TestCase):
 
     @patch("eta.resolvers.podcastindex.urlopen")
     def test_returns_exact_match_feed_url(self, mock_urlopen):
-        mock_urlopen.return_value = self._mock_response({
-            "feeds": [
-                {"title": "Other Podcast", "feedUrl": "https://example.com/other.xml"},
-                {"title": "Darknet Diaries", "feedUrl": "https://feeds.megaphone.fm/darknetdiaries"},
-            ]
-        })
+        mock_urlopen.return_value = self._mock_response(
+            {
+                "feeds": [
+                    {"title": "Other Podcast", "feedUrl": "https://example.com/other.xml"},
+                    {
+                        "title": "Darknet Diaries",
+                        "feedUrl": "https://feeds.megaphone.fm/darknetdiaries",
+                    },
+                ]
+            }
+        )
         result = search_by_title("Darknet Diaries", "key", "secret")
         self.assertEqual(result, "https://feeds.megaphone.fm/darknetdiaries")
 
     @patch("eta.resolvers.podcastindex.urlopen")
     def test_falls_back_to_first_result(self, mock_urlopen):
-        mock_urlopen.return_value = self._mock_response({
-            "feeds": [
-                {"title": "Almost Match", "feedUrl": "https://example.com/almost.xml"},
-            ]
-        })
+        mock_urlopen.return_value = self._mock_response(
+            {
+                "feeds": [
+                    {"title": "Almost Match", "feedUrl": "https://example.com/almost.xml"},
+                ]
+            }
+        )
         result = search_by_title("Something Else", "key", "secret")
         self.assertEqual(result, "https://example.com/almost.xml")
 
@@ -70,6 +78,7 @@ class TestSearchByTitle(unittest.TestCase):
     @patch("eta.resolvers.podcastindex.urlopen")
     def test_handles_network_error(self, mock_urlopen):
         from urllib.error import URLError
+
         mock_urlopen.side_effect = URLError("Connection refused")
         result = search_by_title("Test", "key", "secret")
         self.assertEqual(result, "")
@@ -81,8 +90,18 @@ class TestResolveFeeds(unittest.TestCase):
         mock_search.return_value = "https://feeds.example.com/podcast.xml"
 
         items = [
-            FeedItem(title="My Podcast", xml_url="", html_url="https://spotify.com/show/123", category="Podcasts"),
-            FeedItem(title="Has RSS", xml_url="https://existing.com/rss", html_url="", category="Podcasts"),
+            FeedItem(
+                title="My Podcast",
+                xml_url="",
+                html_url="https://spotify.com/show/123",
+                category="Podcasts",
+            ),
+            FeedItem(
+                title="Has RSS",
+                xml_url="https://existing.com/rss",
+                html_url="",
+                category="Podcasts",
+            ),
         ]
 
         result = resolve_feeds(items, key="k", secret="s")
@@ -104,6 +123,7 @@ class TestResolveFeeds(unittest.TestCase):
         items = [FeedItem(title="Pod", xml_url="", html_url="", category="Podcasts")]
 
         progress_calls = []
+
         def on_progress(current, total, title, feed_url):
             progress_calls.append((current, total, title, feed_url))
 
@@ -114,7 +134,14 @@ class TestResolveFeeds(unittest.TestCase):
     @patch("eta.resolvers.podcastindex.search_by_title")
     def test_preserves_items_when_not_found(self, mock_search):
         mock_search.return_value = ""
-        items = [FeedItem(title="Exclusive Pod", xml_url="", html_url="https://spotify.com/x", category="Podcasts")]
+        items = [
+            FeedItem(
+                title="Exclusive Pod",
+                xml_url="",
+                html_url="https://spotify.com/x",
+                category="Podcasts",
+            )
+        ]
 
         result = resolve_feeds(items, key="k", secret="s")
         self.assertEqual(result[0].xml_url, "")

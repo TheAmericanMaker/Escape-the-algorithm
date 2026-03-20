@@ -45,11 +45,7 @@ def _parse_json(data: object, instance: str) -> List[FeedItem]:
 
     if isinstance(data, dict):
         # Official TikTok export: Activity > Following List > Following
-        following = (
-            data.get("Activity", {})
-            .get("Following List", {})
-            .get("Following", [])
-        )
+        following = data.get("Activity", {}).get("Following List", {}).get("Following", [])
         if following:
             for entry in following:
                 username = _extract_username(entry)
