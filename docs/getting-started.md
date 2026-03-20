@@ -36,7 +36,7 @@ eta youtube subscriptions.csv
 eta reddit subreddits.txt
 eta twitter following.js
 eta tiktok user_data.json
-eta spotify Follow.json
+eta spotify Follow.json --resolve-rss
 
 # Or let eta auto-detect the format
 eta convert subscriptions.csv
