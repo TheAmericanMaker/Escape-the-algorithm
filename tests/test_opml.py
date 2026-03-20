@@ -96,8 +96,10 @@ class TestOPMLMerge(unittest.TestCase):
             category="Reddit",
         )
 
-        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f1, \
-             tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f2:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f1,
+            tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f2,
+        ):
             path1 = Path(f1.name)
             path2 = Path(f2.name)
 

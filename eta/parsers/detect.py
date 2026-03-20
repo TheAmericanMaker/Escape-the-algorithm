@@ -43,13 +43,14 @@ def detect_platform(path: Path) -> str | None:
                 first = data[0]
                 # Twitter JSON: objects with screenName/following keys
                 if isinstance(first, dict) and (
-                    "following" in first or "screenName" in first
-                    or "screen_name" in first
+                    "following" in first or "screenName" in first or "screen_name" in first
                 ):
                     return "twitter"
                 if isinstance(first, dict) and (
-                    "showName" in first or "show_name" in first
-                    or "spotifyUri" in first or "uri" in first
+                    "showName" in first
+                    or "show_name" in first
+                    or "spotifyUri" in first
+                    or "uri" in first
                 ):
                     return "spotify"
             # If it's a JSON list with name/title entries, still likely Spotify
@@ -77,7 +78,8 @@ def detect_platform(path: Path) -> str | None:
 
         # Twitter: text with @ prefixed usernames or x.com/twitter.com URLs
         twitter_indicators = sum(
-            1 for l in (text.splitlines()[:20])
+            1
+            for l in (text.splitlines()[:20])
             if l.strip().startswith("@") or "twitter.com/" in l or "x.com/" in l
         )
         if twitter_indicators > 0:
@@ -89,8 +91,7 @@ def detect_platform(path: Path) -> str | None:
         if lines:
             # If lines contain r/ prefix or reddit.com URLs
             reddit_indicators = sum(
-                1 for l in lines[:20]
-                if l.startswith("r/") or "reddit.com/r/" in l
+                1 for l in lines[:20] if l.startswith("r/") or "reddit.com/r/" in l
             )
             if reddit_indicators > 0:
                 return "reddit"
@@ -99,8 +100,7 @@ def detect_platform(path: Path) -> str | None:
             if "," not in first_line:
                 # Check if most lines look like subreddit names
                 subreddit_like = sum(
-                    1 for l in lines[:20]
-                    if l.replace("_", "").isalnum() and len(l) < 50
+                    1 for l in lines[:20] if l.replace("_", "").isalnum() and len(l) < 50
                 )
                 if subreddit_like > len(lines[:20]) * 0.7:
                     return "reddit"

@@ -57,11 +57,14 @@ eta convert subscriptions.csv
 # Or specify the platform explicitly
 eta youtube subscriptions.csv -o my_feeds.opml
 
+# Spotify: auto-resolve RSS feeds via Podcast Index API
+eta spotify Follow.json --resolve-rss -o podcasts.opml
+
 # Preview without writing anything
 eta youtube subscriptions.csv --dry-run
 
 # Combine multiple platforms into one feed
-eta merge youtube.opml reddit.opml spotify.opml -o everything.opml
+eta merge youtube.opml reddit.opml podcasts.opml -o everything.opml
 ```
 
 Import the `.opml` file into your RSS reader. Done. The algorithm no longer decides what you see.
@@ -74,9 +77,9 @@ Import the `.opml` file into your RSS reader. Done. The algorithm no longer deci
 | **Reddit** | GDPR data export or text list | RSS feed for every subreddit | Ready |
 | **Twitter/X** | Data archive (following.js) | RSS feeds via Nitter instances | Ready |
 | **TikTok** | Data export (user_data.json) | RSS feeds via ProxiTok instances | Ready |
-| **Spotify** | Privacy data export JSON | Podcast names + Spotify URLs | Partial* |
+| **Spotify** | Privacy data export JSON | Podcast RSS feeds via Podcast Index | Ready* |
 
-*Spotify doesn't include RSS feed URLs in their export. See [docs/spotify.md](docs/spotify.md) for how to find podcast RSS feeds manually.
+*Spotify doesn't include RSS URLs in their export. `--resolve-rss` auto-resolves them via the free [Podcast Index API](https://podcastindex.org/). See [docs/spotify.md](docs/spotify.md).
 
 ## How It Works
 
@@ -146,9 +149,10 @@ eta spotify <file> [-o out]     Convert Spotify podcast export
 eta merge <f1> <f2> ... [-o out] Merge multiple OPML files
 
 Flags:
-  --dry-run    Preview conversion without writing files
-  --verbose    Show each feed as it's found
-  --version    Show version
+  --dry-run       Preview conversion without writing files
+  --verbose       Show each feed as it's found
+  --resolve-rss   (spotify only) Look up RSS feeds via Podcast Index API
+  --version       Show version
 ```
 
 ## Documentation
@@ -177,7 +181,6 @@ python -m unittest discover tests/
 
 Ideas for contributions:
 - New platform parsers (Mastodon, Bluesky, Tumblr, Twitch)
-- Better Spotify RSS feed resolution
 - Translations of documentation
 - Packaging for Homebrew, Nix, AUR
 

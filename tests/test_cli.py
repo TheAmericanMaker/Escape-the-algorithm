@@ -69,9 +69,11 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(len(rss_feeds), 3)
 
     def test_merge_command(self):
-        with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f1, \
-             tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f2, \
-             tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as out:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f1,
+            tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f2,
+            tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as out,
+        ):
             yt_out = Path(f1.name)
             rd_out = Path(f2.name)
             merged_out = Path(out.name)
@@ -92,10 +94,15 @@ class TestCLI(unittest.TestCase):
 
     def test_dry_run_does_not_write(self):
         output = Path(tempfile.mktemp(suffix=".opml"))
-        result = main([
-            "youtube", str(FIXTURES / "subscriptions.csv"),
-            "-o", str(output), "--dry-run",
-        ])
+        result = main(
+            [
+                "youtube",
+                str(FIXTURES / "subscriptions.csv"),
+                "-o",
+                str(output),
+                "--dry-run",
+            ]
+        )
         self.assertEqual(result, 0)
         self.assertFalse(output.exists())
 
@@ -103,10 +110,15 @@ class TestCLI(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".opml", delete=False) as f:
             output = Path(f.name)
 
-        result = main([
-            "youtube", str(FIXTURES / "subscriptions.csv"),
-            "-o", str(output), "--verbose",
-        ])
+        result = main(
+            [
+                "youtube",
+                str(FIXTURES / "subscriptions.csv"),
+                "-o",
+                str(output),
+                "--verbose",
+            ]
+        )
         self.assertEqual(result, 0)
 
     def test_convert_auto_detect_youtube(self):

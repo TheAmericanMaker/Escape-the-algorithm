@@ -60,70 +60,69 @@ def main(argv: list[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"{C.DIM}Docs: https://github.com/TheAmericanMaker/Escape-the-algorithm{C.RESET}",
     )
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     subparsers = parser.add_subparsers(dest="command")
 
     # Convert (auto-detect)
-    cv = subparsers.add_parser(
-        "convert", help="Auto-detect format and convert to OPML"
-    )
+    cv = subparsers.add_parser("convert", help="Auto-detect format and convert to OPML")
     cv.add_argument("input", type=Path, help="Export file from any supported platform")
     cv.add_argument("-o", "--output", type=Path, help="Output OPML file")
     cv.add_argument("--dry-run", action="store_true", help="Preview without writing")
     cv.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
     # YouTube
-    yt = subparsers.add_parser(
-        "youtube", help="Convert YouTube subscriptions CSV to OPML"
-    )
+    yt = subparsers.add_parser("youtube", help="Convert YouTube subscriptions CSV to OPML")
     yt.add_argument("input", type=Path, help="Path to subscriptions.csv from Google Takeout")
-    yt.add_argument("-o", "--output", type=Path, help="Output OPML file (default: youtube_feeds.opml)")
+    yt.add_argument(
+        "-o", "--output", type=Path, help="Output OPML file (default: youtube_feeds.opml)"
+    )
     yt.add_argument("--dry-run", action="store_true", help="Preview without writing")
     yt.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
     # Reddit
-    rd = subparsers.add_parser(
-        "reddit", help="Convert Reddit subscriptions to OPML"
-    )
+    rd = subparsers.add_parser("reddit", help="Convert Reddit subscriptions to OPML")
     rd.add_argument("input", type=Path, help="Path to subscribed_subreddits.csv or text file")
-    rd.add_argument("-o", "--output", type=Path, help="Output OPML file (default: reddit_feeds.opml)")
+    rd.add_argument(
+        "-o", "--output", type=Path, help="Output OPML file (default: reddit_feeds.opml)"
+    )
     rd.add_argument("--dry-run", action="store_true", help="Preview without writing")
     rd.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
     # Twitter/X
-    tw = subparsers.add_parser(
-        "twitter", help="Convert Twitter/X following list to OPML"
-    )
+    tw = subparsers.add_parser("twitter", help="Convert Twitter/X following list to OPML")
     tw.add_argument("input", type=Path, help="Path to following.js from Twitter data archive")
-    tw.add_argument("-o", "--output", type=Path, help="Output OPML file (default: twitter_feeds.opml)")
+    tw.add_argument(
+        "-o", "--output", type=Path, help="Output OPML file (default: twitter_feeds.opml)"
+    )
     tw.add_argument("--dry-run", action="store_true", help="Preview without writing")
     tw.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
     # TikTok
-    tk = subparsers.add_parser(
-        "tiktok", help="Convert TikTok following list to OPML"
-    )
+    tk = subparsers.add_parser("tiktok", help="Convert TikTok following list to OPML")
     tk.add_argument("input", type=Path, help="Path to user_data.json from TikTok data export")
-    tk.add_argument("-o", "--output", type=Path, help="Output OPML file (default: tiktok_feeds.opml)")
+    tk.add_argument(
+        "-o", "--output", type=Path, help="Output OPML file (default: tiktok_feeds.opml)"
+    )
     tk.add_argument("--dry-run", action="store_true", help="Preview without writing")
     tk.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
 
     # Spotify
-    sp = subparsers.add_parser(
-        "spotify", help="Convert Spotify podcast data to OPML"
-    )
+    sp = subparsers.add_parser("spotify", help="Convert Spotify podcast data to OPML")
     sp.add_argument("input", type=Path, help="Path to Spotify export JSON file")
-    sp.add_argument("-o", "--output", type=Path, help="Output OPML file (default: spotify_feeds.opml)")
+    sp.add_argument(
+        "-o", "--output", type=Path, help="Output OPML file (default: spotify_feeds.opml)"
+    )
     sp.add_argument("--dry-run", action="store_true", help="Preview without writing")
     sp.add_argument("--verbose", action="store_true", help="Show each feed as it's found")
+    sp.add_argument(
+        "--resolve-rss",
+        action="store_true",
+        help="Look up RSS feeds via Podcast Index API (requires PODCAST_INDEX_KEY and PODCAST_INDEX_SECRET env vars)",
+    )
 
     # Merge
-    mg = subparsers.add_parser(
-        "merge", help="Merge multiple OPML files into one"
-    )
+    mg = subparsers.add_parser("merge", help="Merge multiple OPML files into one")
     mg.add_argument("inputs", nargs="+", type=Path, help="OPML files to merge")
     mg.add_argument("-o", "--output", type=Path, help="Output OPML file (default: merged.opml)")
 
@@ -156,6 +155,7 @@ def _cmd_auto_convert(args: argparse.Namespace) -> int:
         return 1
 
     from eta.parsers.detect import detect_platform
+
     platform = detect_platform(input_path)
     if not platform:
         _error(
@@ -196,9 +196,40 @@ def _cmd_convert(args: argparse.Namespace) -> int:
 
     items = parse(input_path)
 
+    # Spotify RSS resolution via Podcast Index API
+    if getattr(args, "resolve_rss", False) and items:
+        from eta.resolvers.podcastindex import resolve_feeds
+
+        needs_resolve = sum(1 for item in items if not item.xml_url)
+        if needs_resolve:
+            _info(
+                f"Looking up RSS feeds for {C.BOLD}{needs_resolve}{C.RESET} podcasts via Podcast Index..."
+            )
+
+            def _progress(current: int, total: int, title: str, feed_url: str) -> None:
+                if feed_url:
+                    print(f"  {C.GREEN}\u2713{C.RESET} {title}", file=sys.stderr)
+                else:
+                    print(
+                        f"  {C.YELLOW}\u2717{C.RESET} {title} {C.DIM}(not found){C.RESET}",
+                        file=sys.stderr,
+                    )
+
+            try:
+                items = resolve_feeds(
+                    items, on_progress=_progress if getattr(args, "verbose", False) else None
+                )
+                resolved = sum(1 for item in items if item.xml_url)
+                _info(f"Resolved {C.GREEN}{resolved}{C.RESET}/{len(items)} RSS feeds")
+            except ValueError as e:
+                _error(str(e))
+                return 1
+
     if getattr(args, "verbose", False):
         for item in items:
-            rss_indicator = f"{C.GREEN}rss{C.RESET}" if item.xml_url else f"{C.YELLOW}no rss{C.RESET}"
+            rss_indicator = (
+                f"{C.GREEN}rss{C.RESET}" if item.xml_url else f"{C.YELLOW}no rss{C.RESET}"
+            )
             print(f"  [{rss_indicator}] {item.title}", file=sys.stderr)
 
     if not items:
@@ -215,6 +246,7 @@ def _cmd_convert(args: argparse.Namespace) -> int:
         return 0
 
     from eta.exporters.opml import write_opml
+
     write_opml(items, output_path, title=f"Escape the Algorithm - {args.command.title()}")
 
     _print_success(args.command, items, output_path, feeds_with_rss, feeds_without_rss)
@@ -229,14 +261,17 @@ def _cmd_merge(args: argparse.Namespace) -> int:
             return 1
 
     from eta.exporters.opml import merge_opml
+
     output_path = args.output or Path("merged.opml")
     result = merge_opml(args.inputs)
     output_path.write_text(result, encoding="utf-8")
 
-    summary = _box([
-        f"{C.GREEN}\u2713{C.RESET} Merged {C.BOLD}{len(args.inputs)}{C.RESET} OPML files",
-        f"  \u2192 {C.CYAN}{output_path}{C.RESET}",
-    ])
+    summary = _box(
+        [
+            f"{C.GREEN}\u2713{C.RESET} Merged {C.BOLD}{len(args.inputs)}{C.RESET} OPML files",
+            f"  \u2192 {C.CYAN}{output_path}{C.RESET}",
+        ]
+    )
     print(summary, file=sys.stderr)
     return 0
 
@@ -255,9 +290,7 @@ def _print_success(
     ]
     if feeds_without_rss:
         lines.append("")
-        lines.append(
-            f"  {C.YELLOW}\u26a0{C.RESET} {feeds_without_rss} items without RSS URLs"
-        )
+        lines.append(f"  {C.YELLOW}\u26a0{C.RESET} {feeds_without_rss} items without RSS URLs")
         lines.append(f"  {C.DIM}See docs/spotify.md to find podcast RSS feeds{C.RESET}")
     lines.append("")
     lines.append(f"{C.DIM}Import into your RSS reader. Escape the algorithm.{C.RESET}")

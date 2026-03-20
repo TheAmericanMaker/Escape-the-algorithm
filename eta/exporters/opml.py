@@ -22,8 +22,8 @@ def generate_opml(
 
     head = ET.SubElement(opml, "head")
     ET.SubElement(head, "title").text = title
-    ET.SubElement(head, "dateCreated").text = (
-        datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
+    ET.SubElement(head, "dateCreated").text = datetime.now(timezone.utc).strftime(
+        "%a, %d %b %Y %H:%M:%S %z"
     )
 
     body = ET.SubElement(opml, "body")
@@ -34,9 +34,7 @@ def generate_opml(
         groups[item.category or "Uncategorized"].append(item)
 
     for category in sorted(groups):
-        group_outline = ET.SubElement(
-            body, "outline", text=category, title=category
-        )
+        group_outline = ET.SubElement(body, "outline", text=category, title=category)
         for item in sorted(groups[category], key=lambda x: x.title.lower()):
             attrs = {
                 "type": "rss",

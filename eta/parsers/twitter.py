@@ -49,7 +49,7 @@ def _parse_twitter_js(text: str, instance: str) -> List[FeedItem] | None:
     if not match:
         return None
 
-    json_str = text[match.end():]
+    json_str = text[match.end() :]
     # Strip trailing semicolons
     json_str = json_str.rstrip().rstrip(";")
 
