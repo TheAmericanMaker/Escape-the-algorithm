@@ -126,6 +126,24 @@ def main(argv: list[str] | None = None) -> int:
     mg.add_argument("inputs", nargs="+", type=Path, help="OPML files to merge")
     mg.add_argument("-o", "--output", type=Path, help="Output OPML file (default: merged.opml)")
 
+    # GUI
+    gui_p = subparsers.add_parser(
+        "gui",
+        help="Launch a local web GUI — drag, drop, and download, no terminal needed",
+    )
+    gui_p.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        metavar="PORT",
+        help="Port to listen on (default: pick a free port automatically)",
+    )
+    gui_p.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Print the URL but don't open a browser tab automatically",
+    )
+
     args = parser.parse_args(argv)
 
     if not args.command:
@@ -134,16 +152,29 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
+        if args.command == "gui":
+            from eta.gui import start
+
+            start(port=args.port, open_browser=not args.no_browser)
+            return 0
         if args.command == "merge":
             return _cmd_merge(args)
         if args.command == "convert":
             return _cmd_auto_convert(args)
         return _cmd_convert(args)
     except FileNotFoundError as e:
-        _error(str(e))
+        _error(
+            f"{e}\n"
+            f"  {C.DIM}Tip: use 'dir' (Windows) or 'ls' (Mac/Linux) to list files in the current folder.{C.RESET}\n"
+            f"  {C.DIM}Or run: cd ~/Downloads  (then try again){C.RESET}"
+        )
         return 1
     except Exception as e:
-        _error(str(e))
+        _error(
+            f"{e}\n"
+            f"  {C.DIM}If this looks unexpected, please open an issue:{C.RESET}\n"
+            f"  {C.DIM}https://github.com/TheAmericanMaker/Escape-the-algorithm/issues{C.RESET}"
+        )
         return 1
 
 
@@ -158,9 +189,21 @@ def _cmd_auto_convert(args: argparse.Namespace) -> int:
 
     platform = detect_platform(input_path)
     if not platform:
+        suffix = input_path.suffix.lower()
+        hint = {
+            ".csv": "CSV files are usually from YouTube or Reddit exports.",
+            ".js":  "JS files are usually from a Twitter/X data archive (following.js).",
+            ".json": "JSON files are usually from TikTok (user_data.json) or Spotify exports.",
+            ".txt": "Text files are usually a plain list of subreddit or Twitter usernames.",
+        }.get(suffix, f"Unexpected file type '{suffix or '(no extension)'}' — eta supports .csv, .js, .json, and .txt files.")
         _error(
-            f"Could not detect platform format for: {input_path}\n"
-            f"  Try specifying the platform directly: eta youtube|reddit|spotify {input_path}"
+            f"Could not detect which platform '{input_path.name}' came from.\n"
+            f"  {C.DIM}{hint}{C.RESET}\n"
+            f"  Try naming the platform explicitly, e.g.:\n"
+            f"    eta youtube {input_path}\n"
+            f"    eta reddit  {input_path}\n"
+            f"    eta tiktok  {input_path}\n"
+            f"  {C.DIM}Export instructions: https://github.com/TheAmericanMaker/Escape-the-algorithm/tree/main/docs{C.RESET}"
         )
         return 1
 
@@ -270,6 +313,8 @@ def _cmd_merge(args: argparse.Namespace) -> int:
         [
             f"{C.GREEN}\u2713{C.RESET} Merged {C.BOLD}{len(args.inputs)}{C.RESET} OPML files",
             f"  \u2192 {C.CYAN}{output_path}{C.RESET}",
+            "",
+            f"{C.DIM}Next: open your RSS reader \u2192 Settings \u2192 Import OPML \u2192 select {output_path}{C.RESET}",
         ]
     )
     print(summary, file=sys.stderr)
@@ -291,9 +336,20 @@ def _print_success(
     if feeds_without_rss:
         lines.append("")
         lines.append(f"  {C.YELLOW}\u26a0{C.RESET} {feeds_without_rss} items without RSS URLs")
-        lines.append(f"  {C.DIM}See docs/spotify.md to find podcast RSS feeds{C.RESET}")
+        if platform == "spotify":
+            lines.append(
+                f"  {C.DIM}Re-run with --resolve-rss to look them up automatically.{C.RESET}"
+            )
+            lines.append(
+                f"  {C.DIM}See docs/spotify.md for details.{C.RESET}"
+            )
     lines.append("")
     lines.append(f"{C.DIM}Import into your RSS reader. Escape the algorithm.{C.RESET}")
+    lines.append("")
+    lines.append(f"{C.DIM}Next: open your RSS reader \u2192 Settings \u2192 Import OPML \u2192 select {output_path}{C.RESET}")
+    lines.append(
+        f"{C.DIM}New to RSS readers? See: https://github.com/TheAmericanMaker/Escape-the-algorithm#recommended-rss-readers{C.RESET}"
+    )
 
     print(_box(lines), file=sys.stderr)
 

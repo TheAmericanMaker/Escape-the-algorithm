@@ -1,0 +1,78 @@
+name: Build Release Binaries
+
+# Runs automatically when a new GitHub release is published.
+# Builds standalone executables for Windows, macOS (Intel + Apple Silicon), and Linux,
+# then attaches them to the release so users can download without installing Python.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write  # required to upload files to the release
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows (x86_64)
+            asset_name: eta-windows-x86_64.exe
+            binary_path: dist/eta.exe
+
+          - os: macos-13          # GitHub-hosted Intel runner
+            label: macOS (Intel x86_64)
+            asset_name: eta-macos-x86_64
+            binary_path: dist/eta
+
+          - os: macos-latest      # GitHub-hosted Apple Silicon runner (M1+)
+            label: macOS (Apple Silicon arm64)
+            asset_name: eta-macos-arm64
+            binary_path: dist/eta
+
+          - os: ubuntu-latest
+            label: Linux (x86_64)
+            asset_name: eta-linux-x86_64
+            binary_path: dist/eta
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install eta and PyInstaller
+        run: |
+          pip install -e .
+          pip install pyinstaller
+
+      - name: Build binary
+        run: >
+          pyinstaller
+          --onefile
+          --name eta
+          --collect-all eta
+          eta/cli.py
+
+      # Rename the binary to the platform-specific asset name before uploading
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Move-Item dist/eta.exe dist/${{ matrix.asset_name }}
+
+      - name: Rename binary (Unix)
+        if: runner.os != 'Windows'
+        run: mv dist/eta dist/${{ matrix.asset_name }}
+
+      - name: Upload binary to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
